@@ -31,12 +31,18 @@ df_tokenized_title = title_tokenizer.transform(df_cleaned).select('id', 'tokeniz
 stopwords_title_remover = StopWordsRemover(inputCol='tokenized_title', outputCol='cleaned_title')
 df_title_removed_stopwords = stopwords_title_remover.transform(df_tokenized_title).select('id', 'cleaned_title', 'content')
 
+# Clean words whose lenght is less than 1
+filter_length_udf = udf(lambda row: [x for x in row if len(x) > 1], ArrayType(StringType()))
+df_final_title = df_title_removed_stopwords.withColumn('cleaned_title', filter_length_udf(col('cleaned_title')))
+
 # Tokenize content
 content_tokenizer = Tokenizer(inputCol='content', outputCol='tokenized_content')
-df_tokenized_content = content_tokenizer.transform(df_title_removed_stopwords).select('id', 'cleaned_title', 'tokenized_content')
+df_tokenized_content = content_tokenizer.transform(df_final_title).select('id', 'cleaned_title', 'tokenized_content')
 
 # Remove stopwords from content
 stopwords_remover = StopWordsRemover(inputCol='tokenized_content', outputCol='cleaned_content')
 df_removed_stopwords = stopwords_remover.transform(df_tokenized_content).select('id', 'cleaned_title', 'cleaned_content')
 
-display(df_removed_stopwords)
+df_final = df_removed_stopwords.withColumn('cleaned_content', filter_length_udf(col('cleaned_content')))
+
+display(df_final)

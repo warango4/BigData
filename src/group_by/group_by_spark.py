@@ -2,6 +2,8 @@
 from pyspark.sql.functions import udf, col, lower, regexp_replace, concat_ws, trim
 from pyspark.ml.feature import Tokenizer, StopWordsRemover
 from pyspark.sql.types import ArrayType, StringType, IntegerType
+from collections import defaultdict
+from functools import reduce
 
 # Online
 
@@ -13,34 +15,10 @@ file_map = file_rdd.collectAsMap()
 
 # COMMAND ----------
 
-dbutils.widgets.text("word", "Please enter word to search")
 dbutils.widgets.text("search", "Please enter id to search")
 
-# COMMAND ----------
-
-toSearch = str(dbutils.widgets.get("word"))
-final_result = inverted_index_rdd.filter(lambda x, toSearch=toSearch: x[0] == toSearch) \
-                                 .flatMap(lambda result: result[1])
-
-final_result_list = final_result.collect()
-print(final_result_list)
 
 # COMMAND ----------
-
-def printing_result(): 
-  cont = 0
-  maximum = 5
-  for i in final_result_list:
-    if cont == maximum: break
-    if i[0] != None:
-      cont += 1
-      yield i[1], list(((k, v) for k, v in file_map.items() if k == i[0]))
-
-print(list(printing_result()))
-
-# COMMAND ----------
-
-from collections import defaultdict
 
 def accumulate2(l):
   d = defaultdict(list)
@@ -59,8 +37,6 @@ news_rdd = articles_rdd.flatMap(lambda line: [(line[0] , (word, 1)) for word in 
 news_rdd.count()
 
 # COMMAND ----------
-
-from functools import reduce
 
 id_search = int(dbutils.widgets.get("search"))
 if not id_search in file_map or id_search == None: print("Not found")

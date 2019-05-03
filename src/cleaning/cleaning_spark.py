@@ -1,4 +1,4 @@
-from pyspark.sql.functions import udf, col, lower, regexp_replace, concat_ws
+from pyspark.sql.functions import udf, col, lower, regexp_replace, concat_ws, trim
 from pyspark.ml.feature import Tokenizer, StopWordsRemover
 from pyspark.sql.types import ArrayType, StringType, IntegerType
 
@@ -20,8 +20,14 @@ df_file = spark.read.format(file_type) \
   .na.drop()
 
 # Delete punctuation
-df_cleaned = df_file.select('id', (lower(regexp_replace('title', "[^a-zA-Z\\s]", "")).alias('title')), \
-                                     (lower(regexp_replace('content', "[^a-zA-Z\\s]", "")).alias('content')))
+df_cleaned = df_file.select('id', (lower(regexp_replace('title', "[^a-zA-Z\\s]", " ")).alias('title')), \
+                                  (lower(regexp_replace('content', "[^a-zA-Z\\s]", " ")).alias('content')))
+
+df_cleaned = df_cleaned.select('id', (regexp_replace('title', "[!-~]?\\b[\\w]\\b[!-~]?", " ")).alias('title'), \
+                                     (regexp_replace('content', "[!-~]?\\b[\\w]\\b[!-~]?", " ")).alias('content'))
+
+df_cleaned = df_cleaned.select('id', (regexp_replace(trim(col('title')), " +", " ")).alias('title'), \
+                                     (regexp_replace(trim(col('content')), " +", " ")).alias('content'))
 
 # Tokenize title
 title_tokenizer = Tokenizer(inputCol='title', outputCol='tokenized_title')
@@ -53,4 +59,3 @@ df_final = df_final.withColumn('cleaned_title', concat_ws(" ", 'cleaned_title'))
            .select('id', col('cleaned_title').alias('title'), col('cleaned_content').alias('content')) 
            
 display(df_final)
-#df_final.count()

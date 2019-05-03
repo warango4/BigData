@@ -7,6 +7,10 @@
 
 ## Development Environment
 
+To access to the project in Databricks Community enter here:
+
+[Project 3: Text mining](https://databricks-prod-cloudfront.cloud.databricks.com/public/4027ec902e239c93eaaa8714f173bcfc/7331743577824378/4013226145831667/8239666868831222/latest.html)
+
 ### Cluster
 
 In order to create the cluster use Databricks Community with the following configuration:
